@@ -20,41 +20,16 @@ export class Order {
   user_id: string | User;
 
   @Prop({
-    type: SchemaTypes.ObjectId,
-    ref: 'Products',
     default: null,
   })
-  product_id: string[] | Products[];
+  order: any[];
 
-  @Prop({
-      type: Number,
-      default: 1
-  })
-  quantity: number
-
-  @Prop({
-      type: Number,
-      required: true
-  })
-  price: number
-
-  @Prop({
-      type: String,
-      default: null
-  })
-  size: string
-
-  @Prop({
-      type: String,
-      default: null
-  })
-  color: string
 
   @Prop({
       type:  Number,
       default: null
   })
-  sub_total: number
+  delivery_fee: number
 
   @Prop({
       type:  Number,
@@ -67,6 +42,52 @@ export class Order {
       default: null
   })
   status: string
+
+  // @Prop({
+  //     type: Number,
+  //     default: 1
+  // })
+  // quantity: number
+ // price: number
+  // size: string
+   // color: string
+    // sub_total: number
+
+  // @Prop({
+  //     type: Number,
+  //     required: true
+  // })
+  // price: number
+
+  // @Prop({
+  //     type: String,
+  //     default: null
+  // })
+  // size: string
+
+  // @Prop({
+  //     type: String,
+  //     default: null
+  // })
+  // color: string
+
+  // @Prop({
+  //     type:  Number,
+  //     default: null
+  // })
+  // sub_total: number
+
+  // @Prop({
+  //     type:  Number,
+  //     default: null
+  // })
+  // grand_total: number
+
+  // @Prop({
+  //     type:  String,
+  //     default: null
+  // })
+  // status: string
 
   @Prop({
     type: Date,
