@@ -5,13 +5,12 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { AuthModule } from './auth/auth.module';
 import { UsersModule } from './users/users.module';
-import { LoansModule } from './loans/loans.module';
-import { ProductsModule } from './products/products.module';
-import { FundsModule } from './funds/funds.module';
-import { DuesModule } from './dues/dues.module';
-import { OrdersModule } from './orders/orders.module';
-import { JobsModule } from './jobs/jobs.module';
 import { NotificationsModule } from './notifications/notifications.module';
+import { APP_GUARD } from '@nestjs/core';
+import { RoleGuard } from './auth/guards/roles.guard';
+import { CourseModule } from './course/course.module';
+import { ReportModule } from './report/report.module';
+
 
 
 @Module({
@@ -26,16 +25,15 @@ import { NotificationsModule } from './notifications/notifications.module';
     }),
     UsersModule,
     AuthModule,
-    LoansModule,
-    ProductsModule,
-    FundsModule,
-    DuesModule,
-    OrdersModule,
-    JobsModule,
-    NotificationsModule
+    NotificationsModule,
+    CourseModule,
+    ReportModule,
 
   ],
   controllers: [AppController],
-  providers: [AppService, ConfigService],
+  providers: [AppService, ConfigService, {
+    provide: APP_GUARD,
+    useClass: RoleGuard
+  }],
 })
 export class AppModule {}

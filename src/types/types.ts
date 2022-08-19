@@ -3,6 +3,12 @@ export interface IJWTResponse {
   sub: string;
   user_type: string;
 }
+export interface AdminIJWTResponse {
+  email: string,
+  sub: string,
+  role: string[],
+  username: string
+}
 
 export interface IUploadFile {
   fieldname: string;
@@ -41,4 +47,12 @@ export interface IJWTResponse {
 export enum USER_TYPE {
   NURSE = 'NURSE',
   ADMIN = 'ADMIN',
+}
+
+export enum ROLE {
+  ADMIN = "ADMIN",
+  LOAN_OFFICER = "LOAN_OFFICER",
+  HIRE_PURCHASE_OFFICER = "HIRE_PURCHASE_OFFICER",
+  INVESTMENT_OFFICER = "INVESTMENT_OFFICER",
+  USER = "USER"
 }

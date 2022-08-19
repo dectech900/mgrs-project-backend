@@ -17,7 +17,6 @@ import {
   ResetPasswordDto,
 } from '../auth/dto/forgot-password.dto';
 import { Config } from '../config/config';
-import { JobsService } from '../jobs/jobs.service';
 import { IJWTResponse, IUploadFile } from '../types/types';
 import {
   decrypt,
@@ -33,23 +32,38 @@ import { NotificationsService } from '../notifications/notifications.service';
 import { Notifications } from '../notifications/schemas/notifications.schema';
 import * as moment from 'moment';
 import { genSaltSync } from 'bcrypt';
+import { CreateAdminUsersDto, CreatesStudentDto } from './dto/create-admin-users.dto';
 @Injectable()
 export class UsersService {
   private readonly logger = new Logger(UsersService.name);
   constructor(
     @InjectModel(User.name) private readonly userModel: Model<UserDocument>,
-    private readonly jobService: JobsService,
     private readonly jwtService: JwtService,
     private readonly config: Config,
     private readonly mailerService: MailerService,
     @InjectModel(Notifications.name)
-    private readonly notificationModel: Model<Notifications>,
+    private readonly notificationModel: Model<Notifications>
   ) {}
 
-  async authenticate(username: string): Promise<User> {
+  async createAdminUsers(user: CreateAdminUsersDto):Promise<User>{
+    return this.userModel.create({
+      ...user,
+      password: hashPassword(user?.password, 10)
+    })
+  }
+
+  async createStudent(body: CreatesStudentDto):Promise<User>{
+    try {
+      return await this.userModel.create({...body, password: hashPassword(body.password, 10)})
+    } catch (error) {
+      console.log(error)
+    }
+  }
+
+  async authenticate(user: string): Promise<User> {
     return await this.userModel
       .findOne({
-        $or: [{ staff_id: username }, { email: username }],
+        $or: [{ staff_id: user }, { email: user }, {student_id: user}],
       })
       .exec();
   }
@@ -59,13 +73,17 @@ export class UsersService {
   }
 
   //get all users
-  async getUsers(): Promise<User[]> {
-    return await this.userModel.find().exec();
+  // async getUsers(): Promise<User[]> {
+  //   return await this.userModel.find().exec();
+  // }
+
+  //get  user by Id
+  async getUserById(user_id: string): Promise<any> {
+    // console.log('user_id', user_id)
+
+    return await this.userModel.findById(user_id).exec();
   }
 
-  async getUserJob(): Promise<any> {
-    await this.jobService.fetchUser();
-  }
 
   async forgotCustomerPassword(body: ForgotPasswordDto) {
     try {
@@ -210,7 +228,7 @@ export class UsersService {
   async changePassword(
     user: IJWTResponse,
     body: ChangePasswordDto,
-  ): Promise<User> {
+  ): Promise<any> {
     try {
       if (user) {
         const { password, confirmPassword } = body;
@@ -244,7 +262,6 @@ export class UsersService {
           throw new HttpException('Password do not match', 400);
         }
       }
-      throw new UnauthorizedException(null, 'Unathorized user');
     } catch (e) {
       this.logger.log(e?.message, e?.status);
       throw new HttpException(e?.message, e?.status);
@@ -257,6 +274,7 @@ export class UsersService {
   ): Promise<any> {
     try {
       if (user) {
+        console.log('body', body)
         const { password, confirmPassword, email } = body;
         if (password !== confirmPassword)
           throw new HttpException('Password do not match', 400);
@@ -281,9 +299,10 @@ export class UsersService {
           },
           { new: true },
         );
+        console.log('Password and email changed', userInserted)
         if (userInserted) {
           //send email verification message
-          const verify = this.sendVerificationEMail({ email, user }, user);
+          const verify = this.sendVerificationEmail({ email, user });
           const notification = {
             title: 'Email added and Password changed ',
             message:
@@ -304,11 +323,14 @@ export class UsersService {
     }
   }
 
-  async sendVerificationEMail(
-    payLoad: { email: string; user: any },
-    user: any,
+  async sendVerificationEmail(
+    payLoad: { email: string; user: IJWTResponse },
+    // user: any,
   ): Promise<any> {
-    const { email } = payLoad;
+    const { email, user } = payLoad;
+    const userData = await this.userModel.findOne({_id: user?.sub}).select('name').exec()
+    console.log('user', userData)
+
     const token = this.jwtService.sign(
       { payLoad },
       {
@@ -318,13 +340,13 @@ export class UsersService {
     );
     const url = `${this.config.get(
       'app.client_base_url',
-    )}/verifyemail?token=${encodeURIComponent(token)}`;
+    )}/account/verifyemail?token=${encodeURIComponent(token)}`;
 
     // TODO://send mail to the user
     const message = ` <body style='background-color: #f4f4f4;'>
     <div style='display: flex; justify-content: center; align-items: center; flex-direction: column; background-color: #f4f4f4;'>
       <div style='text-align: center; padding: 1rem; background-color: white;'>
-          <p style='font-size: 1.3rem;'>Hi <strong>${'Derrick'},</strong></p> 
+          <p style='font-size: 1.3rem;'>Hi <strong>${userData.name.split(' ')[1]},</strong></p> 
           <p style='font-size: 1.5rem;'>Thanks for joining UPNMG.</p>
           <p style='font-size: 1.5rem;'>In order to confirm your Identity, we need to verify your email address.</p>
           <div style='text-align: center;'><a href='${url}' target='_blank' style='padding: 12px 40px; background-color: rgb(0, 165, 102); color: white; font-size: 1.4rem;text-decoration: none; border-radius: .3rem;'>Click Here To Verify</a></div> <br/>
@@ -354,16 +376,20 @@ export class UsersService {
 
   async verifyUserTokenEmailConfirm(token: string) {
     try {
+      
+      console.log('token', token)
+
       const userPayLoad = await this.jwtService.verify(token, {
         secret: this.config.get('emailVerifyKey'),
       });
+     
       const { payLoad } = userPayLoad;
       this.logger.log(
         `Verification payload ::: {}`.replace('{}', JSON.stringify(payLoad)),
       );
       console.log('payLoad.user', payLoad?.email);
       if (payLoad?.email) {
-        await this.userModel
+       const emailVerified =  await this.userModel
           .findOneAndUpdate(
             { _id: payLoad?.user?.sub },
             {
@@ -372,6 +398,20 @@ export class UsersService {
             },
           )
           .exec();
+          
+          if(emailVerified){
+            const user = await this.userModel.findOne({email: payLoad?.email})
+            const notification = {
+              title: 'Email verified',
+              message: 'Your email has been verified.',
+            };
+            await this.notificationModel.create({
+              title: notification?.title,
+              message: notification?.message,
+              user_id: user?._id,
+              staff_id: user?.staff_id,
+            });
+          }
         return 'Email verified';
       }
     } catch (e) {
@@ -411,38 +451,12 @@ export class UsersService {
   }
 
   //Upload users
-  async uploadUsers(file: IUploadFile): Promise<any> {
-    if (!file || !file?.path) {
-      throw new NotFoundException(null, 'No file was uploaded');
-    }
+  // async uploadUsers(file: IUploadFile): Promise<any> {
+  //   if (!file || !file?.path) {
+  //     throw new NotFoundException(null, 'No file was uploaded');
+  //   }
 
-    const users = [];
-    excelParcer(
-      file?.path,
-      (data) => {
-        const obj = {
-          staff_id: data['staff_id'],
-          name: data['name'],
-          user_type: data['user_type'],
-          password: hashPassword(data['password'].toString(), 10),
-          facility: data['facility'],
-          region: data['region'],
-          district: data['district'],
-          department: data['department'],
-        };
-
-        users.push(obj);
-        console.log('obj', obj);
-      },
-      'sheet 1',
-    );
-
-    console.log('users', users);
-    await this.userModel.deleteMany();
-    // return
-    const uploaded = await this.userModel.create(users);
-    if (uploaded) {
-      return 'Users uploaded successfully';
-    }
-  }
+  //   await this.jobService.bulkUsersUpload(file);
+  //   return true;
+  // }
 }

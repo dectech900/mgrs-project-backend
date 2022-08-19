@@ -1,5 +1,5 @@
 import { compareSync, hashSync } from 'bcrypt';
-import { IPaginate, IPaginateOptions } from 'src/types/types';
+
 import * as xlsx from 'xlsx'
 import {AES, enc} from 'crypto-js'
 
@@ -19,20 +19,13 @@ export const nodeEnv ={
      return hashSync(password, salt)
  }
 
- export const sendEmail = ():any => {
-    
- }
-
  export const encrypt = (text: string, key:string) => {
     return AES.encrypt(text, key).toString()
  }
 
-
  export const decrypt = (cipherText: string, key: string): string => {
     return AES.decrypt(cipherText, key).toString(enc.Utf8);
   };
-
- 
 
  export const excelParcer = (
      file: string,
@@ -57,28 +50,4 @@ export const nodeEnv ={
     })
  }
 
- export const Paginate = <T> (
-     items: ReadonlyArray<T>,
-     count: number,
-     options: IPaginateOptions
- ): IPaginate<T> => {
-    const {url, page, size } = options
-    const totalItems = count ?? 0
-    const pages = Math.ceil(totalItems / size)
-
-    return {
-      docs: items,
-      totalItems,
-      totalPages: pages > 0 ? pages : 1,
-      size: Number(size),
-      page: Number(page),
-      currentPageSize: items.length,
-      links: {
-          previous: page > 1 ? Number(page) - 1 : null,
-          previousPage: page > 1 ? `${url}?page=${Number(page) - 1}&size=${size}`: null,
-          nextPage: page >= pages ? null : `${url}?page=${Number(page) + 1}&size=${size}`,
-          next: page >= pages ? null : Number(page) + 1
-      }  
-    }
- }
 

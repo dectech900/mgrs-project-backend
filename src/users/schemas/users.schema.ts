@@ -1,6 +1,5 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document, SchemaTypes } from 'mongoose';
-import { Products } from '../../products/schemas/products.schema';
 
 export type UserDocument = User & Document;
 @Schema({
@@ -18,16 +17,20 @@ export class User {
 
   @Prop({
     type: String,
-    required: true,
+
   })
   staff_id: string;
 
   @Prop({
-    type: SchemaTypes.ObjectId,
-    ref: 'Productss',
-    default: null
+    type: String,
   })
-  products: Products
+  student_id: string;
+
+  @Prop({
+    type: String,
+  })
+  date_of_birth: string;
+
 
   @Prop({
     type: String,
@@ -37,8 +40,8 @@ export class User {
 
   @Prop({
     type: String,
-    enum: ['NURSE', 'ADMIN'],
-    default: null,
+    enum: ['STUDENT', 'LECTURER'],
+    default: 'STUDENT',
   })
   user_type: string;
 
@@ -79,48 +82,6 @@ export class User {
     type: String,
     default: null,
   })
-  facility?: string;
-  @Prop({
-    type: String,
-    default: null,
-  })
-  department?: string;
- 
-
-  @Prop({
-    type: String,
-    default: null,
-  })
-  region: string;
-
-  @Prop({
-    type: String,
-    default: null,
-  })
-  district: string;
-
-  @Prop({
-    type: String,
-    default: null,
-  })
-  reference: string;
-
-  @Prop({
-    type: Boolean,
-    default: true,
-  })
-  is_account_active: boolean;
-
-  @Prop({
-    type: Boolean,
-    default: false,
-  })
-  accept_privacy_policy: boolean;
-
-  @Prop({
-    type: String,
-    default: null,
-  })
   reset_password_token: string;
 
   @Prop({
@@ -129,23 +90,6 @@ export class User {
   })
   is_used: boolean;
 
-  @Prop({
-    type: Boolean,
-    default: false,
-  })
-  changed_password: boolean;
-
-  @Prop({
-    type: Boolean,
-    default: false,
-  })
-  allow_2step_verification: boolean;
-
-  @Prop({
-    type: Boolean,
-    default: false,
-  })
-  is_email_verified: boolean;
 
   @Prop({
     type: Date,
@@ -153,17 +97,7 @@ export class User {
   })
   deleted_at: string;
 
-  @Prop({
-    type: Date,
-    default: null,
-  })
-  lastLoggedIn: string;
 
-  @Prop({
-    type: Number,
-    default: 0,
-  })
-  verification_retries?: number;
 }
 
 export const UserSchema = SchemaFactory.createForClass(User);
