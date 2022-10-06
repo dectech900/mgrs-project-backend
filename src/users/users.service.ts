@@ -60,6 +60,14 @@ export class UsersService {
     }
   }
 
+  async getAllUsersByType(user_type: string):Promise<User[]>{
+    try {
+      return await this.userModel.find({user_type: user_type}).exec()
+    } catch (error) {
+      console.log(error)
+    }
+  }
+
   async authenticate(user: string): Promise<User> {
     return await this.userModel
       .findOne({
@@ -427,15 +435,16 @@ export class UsersService {
         description,
         email,
         phone_number,
-        username,
+        name,
         cover_image,
         profile_image,
       } = body;
+      console.log('body', body)
       const userD = await this.userModel.findOneAndUpdate(
         { _id: user?.sub },
         {
           email,
-          username,
+          name,
           phone_number,
           description,
           cover_image,

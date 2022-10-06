@@ -1,8 +1,8 @@
-import { Body, Controller, Get, Post, UseGuards, ValidationPipe } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Post, Put, UseGuards, ValidationPipe } from '@nestjs/common';
 import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
 import { User } from 'src/decorators/user.decorator';
 import { IJWTResponse } from 'src/types/types';
-import { CreateReportDto } from './dto/report.dto';
+import { CreateReportDto, UpdateReportDto } from './dto/report.dto';
 import { ReportService } from './report.service';
 import { Report } from './schemas/report.schema';
 
@@ -19,11 +19,54 @@ export class ReportController {
         return await this.reportService.createReport(body, user)
     }
 
+    @Delete('/:report_id')
+    @UseGuards(JwtAuthGuard)
+    async deleteReport(
+        @User() user: IJWTResponse,
+        @Param('report_id') report_id: string
+    ):Promise<Report>{
+        return await this.reportService.deleteReport(user, report_id)
+    }
+
+    @Put('/:report_id')
+    @UseGuards(JwtAuthGuard)
+    async updateReport(
+        @User() user: IJWTResponse,
+        @Param('report_id') report_id: string,
+        @Body() updateReportDto: UpdateReportDto
+    ):Promise<Report>{
+        return await this.reportService.updateReport(user, report_id, updateReportDto)
+    }
+
+    @Get('/count-completed')
+    @UseGuards(JwtAuthGuard)
+    async countCompletedReport(
+        @User() user: IJWTResponse,
+    ):Promise<Report>{
+        return await this.reportService.countCompletedReport(user)
+    }
+
+    @Get('/count-progress')
+    @UseGuards(JwtAuthGuard)
+    async countInProgressReport(
+        @User() user: IJWTResponse,
+    ):Promise<Report>{
+        return await this.reportService.countInProgressReport(user)
+    }
+
     @Get('')
     @UseGuards(JwtAuthGuard)
     async getReport(
         @User() user: IJWTResponse,
     ):Promise<Report[]>{
         return await this.reportService.getReport(user)
+    }
+
+    @Get('/lecturer')
+    @UseGuards(JwtAuthGuard)
+    async getLecturerReport(
+        @User() user: IJWTResponse,
+    ):Promise<Report[]>{
+        return await this.reportService.getLecturerReport(user)
     }
 }

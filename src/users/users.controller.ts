@@ -43,10 +43,18 @@ export class UsersController {
     return await this.userService.me(user);
   }
 
+
   // @Get()
   // async getUsers(): Promise<User[]> {
   //   return await this.userService.getUsers();
   // }
+
+  @Get('/user/type')
+  async getAllUsersByType(
+    @Query('user_type') user_type: string
+  ): Promise<any> {
+    return await this.userService.getAllUsersByType(user_type);
+  }
 
   @Get('/user')
   async getUserById(
